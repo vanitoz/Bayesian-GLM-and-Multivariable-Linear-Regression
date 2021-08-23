@@ -202,4 +202,33 @@ def check_rhat(trace, threshold = 1.01):
         if v > threshold:
             above.append(i)
             
-    return print('The following parameters have an Rhat greater {}:'.format(threshold, above)), 
+    return print('The following parameters have an Rhat greater {}:'.format(threshold, above))
+
+def plot_correlation(trace, data):
+    """
+    ploting correlation btw slope and intercept
+    params : trace : posterior trace-object from model
+             data  : data frame with features and target variable 
+    returns : subplots
+    """
+    
+    df = pd.DataFrame(trace['beta'], columns=data.columns[:-1])
+    df['alpha'] = trace['alpha']
+    
+    ncols=int(len(df.columns)/2)
+    nrows=int(ncols/2)
+    k=0
+
+    fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(18, 8))
+    fig.suptitle('Correlation Between Slope and Intercept', size = 25, y=0.92)
+
+    for i,col in enumerate(df.columns):
+        if i < ncols:
+            j=0
+            sns.scatterplot('alpha', col, data=df, ax=axes[j,i]);
+        else:
+            j=1
+            sns.scatterplot('alpha', col, data=df, ax=axes[j,k]);
+            k+=1
+
+    return plt.show()
