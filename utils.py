@@ -32,7 +32,7 @@ def target_distribution(target):
     Plot Histogram and boxplot for target variable
     params: target - Series, np.array
     """
-    fig = plt.figure(figsize=(16,8))
+    fig = plt.figure(figsize=(12,6))
     plt.subplot(2,1,1)
     plt.ylabel('Frequency')
     sns.distplot(target, fit = norm)
@@ -204,6 +204,10 @@ def check_rhat(trace, threshold = 1.01):
             
     return print('The following parameters have an Rhat greater {}:'.format(threshold, above))
 
+
+
+
+
 def plot_correlation(trace, data):
     """
     ploting correlation btw slope and intercept
@@ -219,8 +223,8 @@ def plot_correlation(trace, data):
     nrows=int(ncols/2)
     k=0
 
-    fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(18, 8))
-    fig.suptitle('Correlation Between Slope and Intercept', size = 25, y=0.92)
+    fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(16, 6))
+    fig.suptitle('Correlation Between Slope and Intercept', size = 25, y=0.95)
 
     for i,col in enumerate(df.columns):
         if i < ncols:
