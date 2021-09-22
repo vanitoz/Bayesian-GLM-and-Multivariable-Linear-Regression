@@ -205,17 +205,15 @@ def check_rhat(trace, threshold = 1.01):
     return print('The following parameters have an Rhat greater {}:'.format(threshold, above))
 
 
-
-
-
 def plot_correlation(trace, data):
+    
     """
     ploting correlation btw slope and intercept
     params : trace : posterior trace-object from model
              data  : data frame with features and target variable 
     returns : subplots
     """
-    
+        
     df = pd.DataFrame(trace['beta'], columns=data.columns[:-1])
     df['alpha'] = trace['alpha']
     
@@ -224,9 +222,9 @@ def plot_correlation(trace, data):
     k=0
 
     fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(16, 6))
-    fig.suptitle('Correlation Between Slope and Intercept', size = 25, y=0.95)
+    fig.suptitle('Correlation Between Slope Coeficients and Intercept', size = 25, y=0.95)
 
-    for i,col in enumerate(df.columns):
+    for i,col in enumerate(df.columns[:-1]):
         if i < ncols:
             j=0
             sns.scatterplot('alpha', col, data=df, ax=axes[j,i]);
@@ -234,5 +232,71 @@ def plot_correlation(trace, data):
             j=1
             sns.scatterplot('alpha', col, data=df, ax=axes[j,k]);
             k+=1
-
     return plt.show()
+
+def calculate_contribution(trace, df, plot = True, summary = True, standardized = False):
+    
+    #var_names = trace.varnames
+    df_summary = az.summary(trace, var_names = 'beta')[['mean','sd']]
+    df_summary['mean2'] = df_summary['mean'].apply(lambda x: x*x)
+    df_summary = df_summary.set_index(df.columns[:-1])
+    
+    if standardized:
+        df_summary['sd2'] = 1
+    else: 
+        df_summary['sd2'] = df_summary['sd'].apply(lambda x: x*x)
+    df_summary['mean2*sd2'] =  df_summary.mean2*df_summary.sd2
+    
+    pcts = list(zip(df_summary.index, 
+                [round(value/sum(df_summary['mean2*sd2'])*100, 
+                       5) for value in df_summary['mean2*sd2'].values]))
+    
+    df_summary['contribution_pct'] = [x[1] for x in pcts]
+    
+    if plot:
+        
+        #Seaborn Horizontal barplot
+        sns.set_style("darkgrid")
+        bar,ax = plt.subplots(figsize=(8,4))
+        ax = sns.barplot(x="contribution_pct", y=df_summary.index, data=df_summary, ci=None, palette="muted",orient='h' )
+        ax.set_title("Contribution to tune_in_i", fontsize=15)
+        ax.set_xlabel ("Percentage")
+        ax.set_ylabel ("Channel Type")
+        for rect in ax.patches:
+            ax.text (rect.get_width(), rect.get_y() + rect.get_height() / 2,"%.1f%%"% rect.get_width(), weight='bold' )
+    else: pass
+        # bar.savefig("Seaborn_Bar_Vertical.png");
+    if summary:
+        return df_summary
+    
+    
+def ppc_check(model, trace, data, plot_ppc = True, glm= False, predictions= False, samples_n = 200, color = 'C2'):
+    
+    ppc_zero = pm.sample_posterior_predictive(trace,
+                                              samples = samples_n,
+                                              model = model 
+                                             )
+    if glm:
+        r2 = az.r2_score(data.TOTAL_CONV.values, ppc_zero['y'])
+    else:
+        r2 = az.r2_score(data.TOTAL_CONV.values, ppc_zero['conversion'])
+    
+    data_ppc_zero = az.from_pymc3(trace= trace, posterior_predictive= ppc_zero)
+    
+    if plot_ppc:
+        ax = az.plot_ppc(data_ppc_zero, figsize=(10,6), mean= True, color = color,)
+        ax.legend(fontsize= 13)
+        # ax.title.set_text('Model with psi_.0' + str(model_trace_list.index((model,trace))+1))
+        ax.set_xlabel('conversion')
+        plt.show()
+    else: pass
+    
+    if glm:
+        print('R2 for Model is : {}'.format(round(r2['r2'],3)))
+    else:
+        print('R2 for Model is : {}'.format(round(r2['r2'],3)))
+    
+    if predictions:
+        return ppc_zero
+    else: pass
+    
