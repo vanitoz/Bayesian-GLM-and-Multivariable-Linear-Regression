@@ -35,6 +35,7 @@ def target_distribution(target):
     fig = plt.figure(figsize=(12,6))
     plt.subplot(2,1,1)
     plt.ylabel('Frequency')
+    #sns.barplot(x = df.index, y = df.TOTAL_CONV, )
     sns.distplot(target, fit = norm)
     plt.subplot(2,1,2)
     plt.boxplot(target, vert = False)
@@ -279,12 +280,12 @@ def ppc_check(model, trace, data, plot_ppc = True, glm= False, predictions= Fals
     if glm:
         r2 = az.r2_score(data.TOTAL_CONV.values, ppc_zero['y'])
     else:
-        r2 = az.r2_score(data.TOTAL_CONV.values, ppc_zero['conversion'])
+        r2 = az.r2_score(data.TOTAL_CONV.values, ppc_zero['conv'])
     
     data_ppc_zero = az.from_pymc3(trace= trace, posterior_predictive= ppc_zero)
     
     if plot_ppc:
-        ax = az.plot_ppc(data_ppc_zero, figsize=(10,6), mean= True, color = color,)
+        ax = az.plot_ppc(data_ppc_zero, figsize=(8,4), mean= True, color = color,)
         ax.legend(fontsize= 13)
         # ax.title.set_text('Model with psi_.0' + str(model_trace_list.index((model,trace))+1))
         ax.set_xlabel('conversion')
