@@ -285,9 +285,10 @@ def ppc_check(model, trace, data, plot_ppc = True, glm= False, predictions= Fals
     data_ppc_zero = az.from_pymc3(trace= trace, posterior_predictive= ppc_zero)
     
     if plot_ppc:
-        ax = az.plot_ppc(data_ppc_zero, figsize=(8,4), mean= True, color = color,)
-        ax.legend(fontsize= 13)
+        
         # ax.title.set_text('Model with psi_.0' + str(model_trace_list.index((model,trace))+1))
+        ax = az.plot_ppc(data_ppc_zero, figsize=(10,6), mean= False, color = color,)
+        ax.legend(fontsize= 13)
         ax.set_xlabel('conversion')
         plt.show()
     else: pass
