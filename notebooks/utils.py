@@ -302,3 +302,42 @@ def ppc_check(model, trace, data, plot_ppc = True, glm= False, predictions= Fals
         return ppc_zero
     else: pass
     
+    
+def generate_idata(trace, model, y, filtered = False):
+    post_pred=pm.sample_posterior_predictive(trace = trace,
+                                             model = model)
+    if filtered:
+        post_pred['conv']=post_pred['conv'][:, np.all(post_pred['conv']<=y.max(), axis = 0)]
+    idata=az.concat(az.from_pymc3(trace),
+                    az.from_pymc3(posterior_predictive=post_pred))
+    return idata
+
+
+def plot_idata(idata):
+    fig, ax = plt.subplots(figsize = (8,6))
+    az.plot_ppc(idata, mean= True, ax=ax)
+    ax.axvline(idata.observed_data.conv.values.mean(), ls="-", color="g", label="True mean")
+    ax.axvline(idata.posterior_predictive.conv.values.flatten().mean(), 
+               ls="--", color="r", label="Predictions mean")
+    ax.legend(fontsize=10);
+    plt.show()
+    
+
+def plot_scewness(idata):
+    #Plot observed and simulated skewness ----------                                        
+    #plt.style.use("arviz-whitegrid")
+    samples_skew = [st.skew(sample) for sample in idata.posterior_predictive.conv.values[0]]
+
+    plt.hist(samples_skew, 
+             histtype='bar', 
+             bins=12, alpha=0.5, color='slategray')
+
+    plt.axvline(st.skew(idata.observed_data.conv.values), 
+                color='green', 
+                label='For observed data: {}'.format(round(st.skew(idata.observed_data.conv.values),2)))
+    plt.axvline(np.mean(samples_skew), 
+                color='red', 
+                label= 'Mean for predictions: {}'.format(round(np.mean(samples_skew),2)))
+    plt.legend(loc = 1)
+    plt.xlabel('Skew(y_rep)')
+    plt.show()
